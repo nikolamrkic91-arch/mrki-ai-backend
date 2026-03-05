@@ -16,7 +16,7 @@ jobs:
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0
     
@@ -55,7 +55,7 @@ jobs:
     permissions:
       id-token: write
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -80,7 +80,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: create-release
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
@@ -131,7 +131,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [create-release, build-and-publish]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     
     - name: Set up Python
       uses: actions/setup-python@v5
