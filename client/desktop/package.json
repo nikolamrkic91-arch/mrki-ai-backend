@@ -1,0 +1,45 @@
+{
+  "name": "mrki-desktop",
+  "version": "1.0.0",
+  "description": "Mrki Desktop Application for Windows",
+  "main": "src/main.js",
+  "author": "Mrki Team",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "publish": "electron-forge publish",
+    "lint": "eslint .",
+    "build:win": "electron-forge make --platform=win32",
+    "build:mac": "electron-forge make --platform=darwin",
+    "build:linux": "electron-forge make --platform=linux"
+  },
+  "dependencies": {
+    "electron-squirrel-startup": "^1.0.0",
+    "electron-log": "^5.0.1",
+    "electron-updater": "^6.1.7",
+    "electron-store": "^8.1.0",
+    "axios": "^1.6.2",
+    "socket.io-client": "^4.7.4"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^7.2.0",
+    "@electron-forge/maker-squirrel": "^7.2.0",
+    "@electron-forge/maker-zip": "^7.2.0",
+    "@electron-forge/maker-deb": "^7.2.0",
+    "@electron-forge/maker-rpm": "^7.2.0",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.2.0",
+    "@electron-forge/plugin-webpack": "^7.2.0",
+    "@vercel/webpack-asset-relocator-loader": "^1.7.3",
+    "css-loader": "^6.8.1",
+    "electron": "^27.1.2",
+    "fork-ts-checker-webpack-plugin": "^9.0.2",
+    "node-loader": "^2.0.0",
+    "style-loader": "^3.3.3",
+    "ts-loader": "^9.5.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.2"
+  }
+}

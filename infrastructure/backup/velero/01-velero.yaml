@@ -1,0 +1,263 @@
+# =============================================================================
+# Velero Backup Configuration for Mrki
+# =============================================================================
+
+# =============================================================================
+# Velero Namespace
+# =============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: velero
+  labels:
+    name: velero
+---
+# =============================================================================
+# Velero ServiceAccount
+# =============================================================================
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: velero
+  namespace: velero
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/velero
+---
+# =============================================================================
+# Velero RBAC
+# =============================================================================
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: velero
+rules:
+  - apiGroups:
+      - "*"
+    resources:
+      - "*"
+    verbs:
+      - "*"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: velero
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: velero
+subjects:
+  - kind: ServiceAccount
+    name: velero
+    namespace: velero
+---
+# =============================================================================
+# Velero Deployment
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: velero
+  namespace: velero
+  labels:
+    app: velero
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: velero
+  template:
+    metadata:
+      labels:
+        app: velero
+    spec:
+      serviceAccountName: velero
+      containers:
+        - name: velero
+          image: velero/velero:v1.12.0
+          command:
+            - /velero
+          args:
+            - server
+            - --features=EnableCSI
+            - --uploader-type=kopia
+          env:
+            - name: VELERO_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: AWS_SHARED_CREDENTIALS_FILE
+              value: /credentials/cloud
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          volumeMounts:
+            - name: cloud-credentials
+              mountPath: /credentials
+            - name: plugins
+              mountPath: /plugins
+          ports:
+            - name: metrics
+              containerPort: 8085
+      volumes:
+        - name: cloud-credentials
+          secret:
+            secretName: cloud-credentials
+        - name: plugins
+          emptyDir: {}
+      initContainers:
+        - name: velero-plugin-for-aws
+          image: velero/velero-plugin-for-aws:v1.8.0
+          volumeMounts:
+            - name: plugins
+              mountPath: /target
+        - name: velero-plugin-for-csi
+          image: velero/velero-plugin-for-csi:v0.6.0
+          volumeMounts:
+            - name: plugins
+              mountPath: /target
+---
+# =============================================================================
+# Velero Service
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: velero
+  namespace: velero
+  labels:
+    app: velero
+spec:
+  type: ClusterIP
+  selector:
+    app: velero
+  ports:
+    - name: metrics
+      port: 8085
+      targetPort: 8085
+---
+# =============================================================================
+# Velero Backup Storage Location
+# =============================================================================
+apiVersion: velero.io/v1
+kind: BackupStorageLocation
+metadata:
+  name: aws
+  namespace: velero
+spec:
+  provider: aws
+  objectStorage:
+    bucket: mrki-velero-backups
+    prefix: production
+  config:
+    region: us-east-1
+    s3ForcePathStyle: "false"
+    s3Url: ""
+---
+# =============================================================================
+# Velero Volume Snapshot Location
+# =============================================================================
+apiVersion: velero.io/v1
+kind: VolumeSnapshotLocation
+metadata:
+  name: aws
+  namespace: velero
+spec:
+  provider: aws
+  config:
+    region: us-east-1
+---
+# =============================================================================
+# Velero Backup Schedule
+# =============================================================================
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: mrki-daily-backup
+  namespace: velero
+spec:
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  template:
+    includedNamespaces:
+      - mrki-apps
+      - mrki-data
+      - monitoring
+    excludedResources:
+      - events
+      - pods
+    labelSelector:
+      matchExpressions:
+        - key: backup
+          operator: NotIn
+          values:
+            - "false"
+    ttl: 720h0m0s  # 30 days
+    storageLocation: aws
+    volumeSnapshotLocations:
+      - aws
+    defaultVolumesToFsBackup: true
+---
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: mrki-hourly-backup
+  namespace: velero
+spec:
+  schedule: "0 * * * *"  # Hourly
+  template:
+    includedNamespaces:
+      - mrki-apps
+    labelSelector:
+      matchLabels:
+        backup: hourly
+    ttl: 24h0m0s
+    storageLocation: aws
+---
+# =============================================================================
+# Velero Backup for Critical Data
+# =============================================================================
+apiVersion: velero.io/v1
+kind: Backup
+metadata:
+  name: mrki-critical-backup
+  namespace: velero
+spec:
+  includedNamespaces:
+    - mrki-data
+  includedResources:
+    - persistentvolumeclaims
+    - persistentvolumes
+    - secrets
+    - configmaps
+  labelSelector:
+    matchLabels:
+      tier: database
+  storageLocation: aws
+  volumeSnapshotLocations:
+    - aws
+  ttl: 2160h0m0s  # 90 days
+  defaultVolumesToFsBackup: true
+---
+# =============================================================================
+# Velero Restore (Example)
+# =============================================================================
+# apiVersion: velero.io/v1
+# kind: Restore
+# metadata:
+#   name: mrki-restore
+#   namespace: velero
+# spec:
+#   backupName: mrki-daily-backup-20231120020000
+#   includedNamespaces:
+#     - mrki-apps
+#   excludedResources:
+#     - nodes
+#     - events
+#     - events.events.k8s.io
+#     - backups.velero.io
+#     - restores.velero.io
+#     - resticrepositories.velero.io

@@ -1,0 +1,40 @@
+# Mrki Visual Engine - Requirements
+# ==================================
+
+# Core dependencies
+numpy>=1.21.0
+Pillow>=9.0.0
+opencv-python>=4.5.0
+
+# Image processing
+scikit-image>=0.19.0
+scipy>=1.7.0
+
+# Machine Learning
+scikit-learn>=1.0.0
+
+# API Framework
+fastapi>=0.95.0
+uvicorn[standard]>=0.20.0
+python-multipart>=0.0.6
+
+# Data validation
+pydantic>=1.10.0
+
+# Template engine
+Jinja2>=3.1.0
+
+# Utilities
+python-dotenv>=0.19.0
+
+# Optional: OCR support
+# pytesseract>=0.3.10
+
+# Optional: Figma API
+# requests>=2.28.0
+
+# Development dependencies (optional)
+# pytest>=7.0.0
+# pytest-asyncio>=0.20.0
+# black>=22.0.0
+# flake8>=5.0.0

@@ -1,0 +1,50 @@
+id = "mrki"
+name = "Mrki"
+version = "1.0.0"
+schema_version = 1
+authors = ["Mrki Team <team@mrki.dev>"]
+description = "AI-powered development assistant for Zed"
+repository = "https://github.com/mrki/mrki"
+
+[language_servers.mrki]
+name = "Mrki Language Server"
+language = "Python"
+
+[language_servers.mrki-js]
+name = "Mrki Language Server (JS)"
+language = "JavaScript"
+
+[language_servers.mrki-ts]
+name = "Mrki Language Server (TS)"
+language = "TypeScript"
+
+[language_servers.mrki-rust]
+name = "Mrki Language Server (Rust)"
+language = "Rust"
+
+[language_servers.mrki-go]
+name = "Mrki Language Server (Go)"
+language = "Go"
+
+[slash_commands.mrki]
+name = "mrki"
+description = "Ask Mrki for help"
+requires_argument = true
+
+[slash_commands.mrki-explain]
+name = "mrki-explain"
+description = "Explain selected code with Mrki"
+requires_argument = false
+
+[slash_commands.mrki-test]
+name = "mrki-test"
+description = "Generate tests with Mrki"
+requires_argument = false
+
+[slash_commands.mrki-refactor]
+name = "mrki-refactor"
+description = "Refactor code with Mrki"
+requires_argument = true
+
+[context_servers.mrki]
+name = "Mrki Context Server"

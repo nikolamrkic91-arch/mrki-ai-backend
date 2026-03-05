@@ -1,0 +1,13 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Mrki Community Discussions
+    url: https://github.com/mrki/mrki/discussions
+    about: Please ask and answer questions here.
+  
+  - name: Security Vulnerability
+    url: https://github.com/mrki/mrki/security/advisories/new
+    about: Please report security vulnerabilities here.
+  
+  - name: Documentation
+    url: https://mrki.readthedocs.io
+    about: Check the documentation for answers to common questions.

@@ -1,0 +1,202 @@
+version: '3.8'
+
+services:
+  # Main Mrki application
+  mrki:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mrki-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - MRKI_SERVER_HOST=0.0.0.0
+      - MRKI_SERVER_PORT=8080
+      - MRKI_DATABASE_URL=postgresql://mrki:mrki_password@postgres:5432/mrki
+      - MRKI_REDIS_URL=redis://redis:6379/0
+      - MRKI_SECURITY_SECRET_KEY=${MRKI_SECRET_KEY:-change-this-in-production}
+      - MRKI_LOG_LEVEL=INFO
+      - MRKI_SCHEDULER_ENABLED=true
+    volumes:
+      - mrki_data:/app/data
+      - ./plugins:/app/plugins:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mrki_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:16-alpine
+    container_name: mrki-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=mrki
+      - POSTGRES_PASSWORD=mrki_password
+      - POSTGRES_DB=mrki
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - mrki_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mrki -d mrki"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis cache and message broker
+  redis:
+    image: redis:7-alpine
+    container_name: mrki-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - mrki_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Optional: Celery worker for background tasks
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mrki-worker
+    restart: unless-stopped
+    command: celery -A mrki.worker worker --loglevel=info --concurrency=4
+    environment:
+      - MRKI_DATABASE_URL=postgresql://mrki:mrki_password@postgres:5432/mrki
+      - MRKI_REDIS_URL=redis://redis:6379/0
+      - MRKI_SECURITY_SECRET_KEY=${MRKI_SECRET_KEY:-change-this-in-production}
+      - MRKI_LOG_LEVEL=INFO
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mrki_network
+    profiles:
+      - worker
+
+  # Optional: Celery beat for scheduled tasks
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mrki-scheduler
+    restart: unless-stopped
+    command: celery -A mrki.worker beat --loglevel=info --scheduler redbeat.RedBeatScheduler
+    environment:
+      - MRKI_DATABASE_URL=postgresql://mrki:mrki_password@postgres:5432/mrki
+      - MRKI_REDIS_URL=redis://redis:6379/0
+      - MRKI_SECURITY_SECRET_KEY=${MRKI_SECRET_KEY:-change-this-in-production}
+      - REDBEAT_REDIS_URL=redis://redis:6379/1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mrki_network
+    profiles:
+      - worker
+
+  # Optional: Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mrki-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - mrki_network
+    profiles:
+      - monitoring
+
+  # Optional: Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: mrki-grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    ports:
+      - "3000:3000"
+    networks:
+      - mrki_network
+    profiles:
+      - monitoring
+    depends_on:
+      - prometheus
+
+  # Optional: Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: mrki-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - mrki
+    networks:
+      - mrki_network
+    profiles:
+      - proxy
+
+volumes:
+  mrki_data:
+    driver: local
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  mrki_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

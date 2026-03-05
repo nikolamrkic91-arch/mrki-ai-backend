@@ -1,0 +1,140 @@
+{
+  "name": "mrki-cursor",
+  "displayName": "Mrki for Cursor",
+  "description": "Mrki integration for Cursor editor - enhanced AI development experience",
+  "version": "1.0.0",
+  "publisher": "mrki-team",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Machine Learning",
+    "Other"
+  ],
+  "keywords": [
+    "mrki",
+    "cursor",
+    "ai",
+    "code completion"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:mrki.cursor.enable"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "mrki.cursor.enable",
+        "title": "Enable Mrki Integration",
+        "category": "Mrki Cursor"
+      },
+      {
+        "command": "mrki.cursor.disable",
+        "title": "Disable Mrki Integration",
+        "category": "Mrki Cursor"
+      },
+      {
+        "command": "mrki.cursor.sync",
+        "title": "Sync with Cursor AI",
+        "category": "Mrki Cursor"
+      },
+      {
+        "command": "mrki.cursor.composer",
+        "title": "Open Mrki Composer",
+        "category": "Mrki Cursor"
+      },
+      {
+        "command": "mrki.cursor.context",
+        "title": "Add to Cursor Context",
+        "category": "Mrki Cursor"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "mrki.cursor.context",
+          "group": "mrki-cursor@1",
+          "when": "editorHasSelection"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "mrki.cursor.enable"
+        },
+        {
+          "command": "mrki.cursor.disable"
+        },
+        {
+          "command": "mrki.cursor.sync"
+        },
+        {
+          "command": "mrki.cursor.composer"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Mrki Cursor Integration",
+      "properties": {
+        "mrki.cursor.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Mrki Cursor integration"
+        },
+        "mrki.cursor.composer.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Mrki Composer panel"
+        },
+        "mrki.cursor.inlineCompletions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show Mrki completions alongside Cursor Tab"
+        },
+        "mrki.cursor.contextSync": {
+          "type": "boolean",
+          "default": true,
+          "description": "Sync context between Mrki and Cursor AI"
+        },
+        "mrki.cursor.priority": {
+          "type": "string",
+          "default": "cursor",
+          "enum": ["mrki", "cursor", "combined"],
+          "description": "Priority for AI suggestions"
+        },
+        "mrki.cursor.server.host": {
+          "type": "string",
+          "default": "localhost",
+          "description": "Mrki server host"
+        },
+        "mrki.cursor.server.port": {
+          "type": "number",
+          "default": 8765,
+          "description": "Mrki server port"
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "mrki.cursor.composer",
+        "key": "ctrl+shift+o",
+        "mac": "cmd+shift+o"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  }
+}

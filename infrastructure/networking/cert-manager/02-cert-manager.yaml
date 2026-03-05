@@ -1,0 +1,126 @@
+# =============================================================================
+# Cert-Manager Configuration for Mrki
+# =============================================================================
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: admin@mrki.io
+    privateKeySecretRef:
+      name: letsencrypt-staging
+    solvers:
+      - http01:
+          ingress:
+            class: nginx
+      - dns01:
+          route53:
+            region: us-east-1
+            hostedZoneID: ZONE_ID
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: admin@mrki.io
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+      - http01:
+          ingress:
+            class: nginx
+        selector:
+          dnsNames:
+            - "*.mrki.io"
+            - "mrki.io"
+      - dns01:
+          route53:
+            region: us-east-1
+            hostedZoneID: ZONE_ID
+        selector:
+          dnsZones:
+            - "mrki.io"
+---
+# =============================================================================
+# Self-Signed ClusterIssuer for Internal Use
+# =============================================================================
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned
+spec:
+  selfSigned: {}
+---
+# =============================================================================
+# CA Issuer for Internal Certificates
+# =============================================================================
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: mrki-ca
+  namespace: cert-manager
+spec:
+  isCA: true
+  commonName: mrki-ca
+  secretName: mrki-ca-secret
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: selfsigned
+    kind: ClusterIssuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: mrki-ca-issuer
+spec:
+  ca:
+    secretName: mrki-ca-secret
+---
+# =============================================================================
+# Certificate for Mrki Services
+# =============================================================================
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: mrki-wildcard
+  namespace: mrki-apps
+spec:
+  secretName: mrki-wildcard-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+    - "*.mrki.io"
+    - "mrki.io"
+    - "api.mrki.io"
+    - "app.mrki.io"
+    - "grafana.mrki.io"
+    - "prometheus.mrki.io"
+---
+# =============================================================================
+# Certificate for Internal Services
+# =============================================================================
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: mrki-internal
+  namespace: mrki-apps
+spec:
+  secretName: mrki-internal-tls
+  issuerRef:
+    name: mrki-ca-issuer
+    kind: ClusterIssuer
+  dnsNames:
+    - "*.mrki-data.svc.cluster.local"
+    - "*.mrki-apps.svc.cluster.local"
+    - "mrki-postgres.mrki-data.svc.cluster.local"
+    - "mrki-redis.mrki-data.svc.cluster.local"
+    - "mrki-mongodb.mrki-data.svc.cluster.local"

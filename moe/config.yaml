@@ -1,0 +1,414 @@
+# Mrki MoE Configuration
+# Mixture-of-Experts and Open-Weights System Configuration
+
+# =============================================================================
+# System Configuration
+# =============================================================================
+system:
+  name: "Mrki MoE System"
+  version: "1.0.0"
+  log_level: "INFO"
+  
+  # Device configuration
+  device:
+    prefer_cuda: true
+    prefer_metal: true  # For Apple Silicon
+    fallback_cpu: true
+    
+  # Performance settings
+  performance:
+    compile_models: false  # PyTorch 2.0 compile
+    use_flash_attention: true
+    enable_memory_efficient_attention: true
+    
+# =============================================================================
+# MoE Router Configuration
+# =============================================================================
+router:
+  # Number of experts in the MoE system
+  num_experts: 64
+  
+  # Top-k experts to select per token
+  top_k: 2
+  
+  # Capacity factor for load balancing
+  capacity_factor: 1.25
+  
+  # Minimum capacity per expert
+  min_capacity: 4
+  
+  # Router noise for exploration (training)
+  noise_std: 1.0
+  
+  # Auxiliary loss coefficients
+  aux_loss_coef: 0.01
+  z_loss_coef: 0.001
+  
+  # Load balancing importance
+  load_balance_importance: 0.1
+  
+  # Expert affinity decay rate
+  expert_affinity_decay: 0.95
+  
+  # Maximum concurrent expert executions
+  max_concurrent_experts: 8
+  
+  # Routing strategy: top_k, expert_choice, capacity_based, learned, hybrid
+  routing_strategy: "top_k"
+  
+  # Enable hierarchical routing for 100+ experts
+  hierarchical_routing: true
+  num_clusters: 8
+  experts_per_cluster: 8
+
+# =============================================================================
+# Expert Manager Configuration
+# =============================================================================
+expert_manager:
+  # Maximum number of cached experts in memory
+  max_cached_experts: 16
+  
+  # Maximum memory usage in MB
+  max_memory_mb: 32768
+  
+  # Expert warmup iterations
+  warmup_iterations: 3
+  
+  # Memory monitoring
+  memory_monitor:
+    enabled: true
+    warning_threshold: 0.85
+    critical_threshold: 0.95
+    check_interval_seconds: 5
+
+# =============================================================================
+# Model Loader Configuration
+# =============================================================================
+model_loader:
+  # Cache directory for models
+  cache_dir: "~/.cache/mrki/models"
+  
+  # Default backend: transformers, llama_cpp, vllm
+  default_backend: "transformers"
+  
+  # HuggingFace settings
+  huggingface:
+    trust_remote_code: false
+    use_auth_token: null
+    
+  # llama.cpp settings
+  llama_cpp:
+    n_ctx: 4096
+    n_gpu_layers: -1  # -1 = all layers
+    n_batch: 512
+    verbose: false
+    
+  # vLLM settings
+  vllm:
+    tensor_parallel_size: 1
+    gpu_memory_utilization: 0.9
+    max_model_len: null
+
+# =============================================================================
+# Local Inference Configuration
+# =============================================================================
+inference:
+  # Device configuration
+  device: "auto"  # auto, cuda, mps, cpu
+  dtype: "auto"   # auto, float16, bfloat16, float32
+  
+  # Batch settings
+  max_batch_size: 16
+  max_sequence_length: 8192
+  max_new_tokens: 512
+  
+  # Generation parameters
+  generation:
+    temperature: 0.7
+    top_p: 0.9
+    top_k: 50
+    repetition_penalty: 1.0
+    
+  # Performance settings
+  performance:
+    use_cache: true
+    use_flash_attention: true
+    compile_model: false
+    enable_memory_efficient_attention: true
+    
+  # Memory settings
+  memory:
+    max_memory_mb: 16384
+    
+  # Streaming settings
+  streaming:
+    enabled: true
+    stream_interval: 4
+
+# =============================================================================
+# Quantization Configuration
+# =============================================================================
+quantization:
+  # Default quantization type: int8, int4, nf4, fp4, gptq, awq
+  default_type: "nf4"
+  
+  # Default method: bitsandbytes, gptq, awq, pytorch
+  default_method: "bitsandbytes"
+  
+  # BitsAndBytes settings
+  bitsandbytes:
+    load_in_4bit: true
+    load_in_8bit: false
+    bnb_4bit_compute_dtype: "bfloat16"
+    bnb_4bit_quant_type: "nf4"
+    bnb_4bit_use_double_quant: true
+    llm_int8_threshold: 6.0
+    
+  # GPTQ settings
+  gptq:
+    bits: 4
+    group_size: 128
+    desc_act: false
+    damp_percent: 0.01
+    
+  # AWQ settings
+  awq:
+    bits: 4
+    group_size: 128
+    version: "GEMM"
+
+# =============================================================================
+# Fine-Tuning Configuration
+# =============================================================================
+fine_tuning:
+  # Default method: lora, qlora, full
+  default_method: "lora"
+  
+  # LoRA settings
+  lora:
+    r: 16
+    lora_alpha: 32
+    lora_dropout: 0.05
+    target_modules:
+      - "q_proj"
+      - "v_proj"
+      - "k_proj"
+      - "o_proj"
+      - "gate_proj"
+      - "up_proj"
+      - "down_proj"
+    bias: "none"
+    task_type: "CAUSAL_LM"
+    use_rslora: false
+    
+  # Training hyperparameters
+  training:
+    num_epochs: 3
+    batch_size: 4
+    gradient_accumulation_steps: 4
+    learning_rate: 0.0002
+    weight_decay: 0.01
+    warmup_steps: 100
+    max_grad_norm: 1.0
+    max_seq_length: 2048
+    
+  # Optimization
+  optimization:
+    optimizer: "adamw_torch"
+    lr_scheduler: "cosine"
+    fp16: false
+    bf16: true
+    
+  # Checkpointing
+  checkpointing:
+    output_dir: "./checkpoints"
+    save_steps: 500
+    eval_steps: 500
+    logging_steps: 10
+    save_total_limit: 3
+    load_best_model_at_end: true
+
+# =============================================================================
+# Expert Registry Configuration
+# =============================================================================
+expert_registry:
+  # Storage path
+  storage_path: "~/.mrki/expert_registry.json"
+  
+  # Health check settings
+  health_check:
+    enabled: true
+    interval_seconds: 30
+    timeout_seconds: 10
+    
+  # Load balancing
+  load_balancing:
+    strategy: "least_connections"  # round_robin, least_connections, weighted_response_time
+    
+  # Discovery settings
+  discovery:
+    enable_capability_indexing: true
+    enable_type_indexing: true
+
+# =============================================================================
+# Predefined Expert Models
+# =============================================================================
+experts:
+  # General-purpose models
+  general:
+    llama-3-8b:
+      model_id: "meta-llama/Meta-Llama-3-8B-Instruct"
+      backend: "transformers"
+      dtype: "bfloat16"
+      description: "General-purpose instruction-tuned model"
+      capabilities:
+        - conversation
+        - reasoning
+        - analysis
+        
+    llama-3-70b:
+      model_id: "meta-llama/Meta-Llama-3-70B-Instruct"
+      backend: "transformers"
+      dtype: "bfloat16"
+      description: "Large general-purpose model"
+      capabilities:
+        - conversation
+        - reasoning
+        - analysis
+        - creative
+        
+    mistral-7b:
+      model_id: "mistralai/Mistral-7B-Instruct-v0.2"
+      backend: "transformers"
+      dtype: "bfloat16"
+      description: "Efficient general-purpose model"
+      capabilities:
+        - conversation
+        - reasoning
+        
+    mixtral-8x7b:
+      model_id: "mistralai/Mixtral-8x7B-Instruct-v0.1"
+      backend: "transformers"
+      dtype: "bfloat16"
+      description: "Sparse MoE model"
+      capabilities:
+        - conversation
+        - reasoning
+        - analysis
+        - code
+
+  # Code models
+  code:
+    codellama-7b:
+      model_id: "codellama/CodeLlama-7b-Instruct-hf"
+      backend: "transformers"
+      dtype: "bfloat16"
+      description: "Code generation and analysis"
+      capabilities:
+        - code
+        - technical
+        
+    codellama-34b:
+      model_id: "codellama/CodeLlama-34b-Instruct-hf"
+      backend: "transformers"
+      dtype: "bfloat16"
+      description: "Large code model"
+      capabilities:
+        - code
+        - technical
+        - reasoning
+        
+    deepseek-coder-6.7b:
+      model_id: "deepseek-ai/deepseek-coder-6.7b-instruct"
+      backend: "transformers"
+      dtype: "bfloat16"
+      description: "Specialized code model"
+      capabilities:
+        - code
+        - technical
+
+  # Small/edge models
+  edge:
+    phi-3-mini:
+      model_id: "microsoft/Phi-3-mini-4k-instruct"
+      backend: "transformers"
+      dtype: "bfloat16"
+      description: "Small but capable model"
+      capabilities:
+        - conversation
+        - reasoning
+      trust_remote_code: true
+      
+    gemma-2b:
+      model_id: "google/gemma-2b-it"
+      backend: "transformers"
+      dtype: "bfloat16"
+      description: "Compact instruction model"
+      capabilities:
+        - conversation
+        
+    qwen2-1.5b:
+      model_id: "Qwen/Qwen2-1.5B-Instruct"
+      backend: "transformers"
+      dtype: "bfloat16"
+      description: "Tiny but capable model"
+      capabilities:
+        - conversation
+        - reasoning
+
+  # Specialized models
+  specialized:
+    neural-chat-7b:
+      model_id: "Intel/neural-chat-7b-v3-1"
+      backend: "transformers"
+      dtype: "bfloat16"
+      description: "Optimized conversational model"
+      capabilities:
+        - conversation
+        
+    openchat-3.5:
+      model_id: "openchat/openchat-3.5-0106"
+      backend: "transformers"
+      dtype: "bfloat16"
+      description: "High-quality conversational model"
+      capabilities:
+        - conversation
+        - reasoning
+
+# =============================================================================
+# GPU Configuration
+# =============================================================================
+gpu:
+  # CUDA settings
+  cuda:
+    allow_tf32: true
+    cudnn_benchmark: true
+    
+  # Memory settings
+  memory:
+    max_memory_per_gpu: null  # e.g., {0: "24GiB", 1: "24GiB"}
+    
+  # Multi-GPU
+  multi_gpu:
+    device_map: "auto"
+    tensor_parallel: false
+    tensor_parallel_size: 1
+
+# =============================================================================
+# Monitoring and Logging
+# =============================================================================
+monitoring:
+  # Metrics
+  metrics:
+    enabled: true
+    export_interval_seconds: 60
+    
+  # Logging
+  logging:
+    level: "INFO"
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    
+  # Tracing
+  tracing:
+    enabled: false
+    sample_rate: 0.1

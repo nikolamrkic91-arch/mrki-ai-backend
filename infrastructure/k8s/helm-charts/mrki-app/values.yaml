@@ -1,0 +1,271 @@
+# =============================================================================
+# Mrki Application Helm Chart - Default Values
+# =============================================================================
+
+# Global Configuration
+global:
+  environment: production
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: ""
+
+# =============================================================================
+# API Service Configuration
+# =============================================================================
+api:
+  enabled: true
+  replicaCount: 3
+  
+  image:
+    repository: mrki/api
+    tag: latest
+    pullPolicy: Always
+  
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+    grpcPort: 9090
+  
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+      - host: api.mrki.io
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: mrki-api-tls
+        hosts:
+          - api.mrki.io
+  
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 50
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+    metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: Utilization
+            averageUtilization: 70
+  
+  livenessProbe:
+    enabled: true
+    path: /health/live
+    initialDelaySeconds: 10
+    periodSeconds: 10
+  
+  readinessProbe:
+    enabled: true
+    path: /health/ready
+    initialDelaySeconds: 5
+    periodSeconds: 5
+  
+  env:
+    - name: APP_ENV
+      value: "production"
+    - name: LOG_LEVEL
+      value: "info"
+  
+  envFrom:
+    - configMapRef:
+        name: mrki-config
+    - secretRef:
+        name: mrki-secrets
+  
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 1000
+  
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+  
+  serviceAccount:
+    create: true
+    annotations:
+      eks.amazonaws.com/role-arn: ""
+  
+  pdb:
+    enabled: true
+    minAvailable: 2
+
+# =============================================================================
+# Worker Service Configuration
+# =============================================================================
+worker:
+  enabled: true
+  replicaCount: 2
+  
+  image:
+    repository: mrki/worker
+    tag: latest
+    pullPolicy: Always
+  
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+  
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 30
+    triggers:
+      - type: redis
+        metadata:
+          listLength: "50"
+  
+  env:
+    - name: WORKER_CONCURRENCY
+      value: "10"
+  
+  serviceAccount:
+    create: true
+
+# =============================================================================
+# Web Frontend Configuration
+# =============================================================================
+web:
+  enabled: true
+  replicaCount: 2
+  
+  image:
+    repository: mrki/web
+    tag: latest
+    pullPolicy: Always
+  
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 3000
+  
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+      - host: app.mrki.io
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: mrki-web-tls
+        hosts:
+          - app.mrki.io
+  
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 70
+
+# =============================================================================
+# PostgreSQL Configuration (Bitnami Subchart)
+# =============================================================================
+postgresql:
+  enabled: true
+  auth:
+    username: mrki
+    database: mrki
+    existingSecret: mrki-postgres-secret
+  primary:
+    persistence:
+      enabled: true
+      size: 50Gi
+      storageClass: gp3
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+  readReplicas:
+    replicaCount: 1
+
+# =============================================================================
+# Redis Configuration (Bitnami Subchart)
+# =============================================================================
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    existingSecret: mrki-redis-secret
+    existingSecretPasswordKey: password
+  architecture: replication
+  replica:
+    replicaCount: 2
+  master:
+    persistence:
+      enabled: true
+      size: 10Gi
+  replica:
+    persistence:
+      enabled: true
+      size: 10Gi
+
+# =============================================================================
+# MongoDB Configuration (Bitnami Subchart)
+# =============================================================================
+mongodb:
+  enabled: true
+  auth:
+    enabled: true
+    existingSecret: mrki-mongodb-secret
+  architecture: replicaset
+  replicaCount: 3
+  persistence:
+    enabled: true
+    size: 20Gi
+
+# =============================================================================
+# Kafka Configuration (Bitnami Subchart)
+# =============================================================================
+kafka:
+  enabled: false
+  replicaCount: 3
+  persistence:
+    enabled: true
+    size: 50Gi
+  zookeeper:
+    enabled: true
+    replicaCount: 3

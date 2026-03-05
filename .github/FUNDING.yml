@@ -1,0 +1,7 @@
+# Funding configuration for Mrki
+# These are supported funding model platforms
+
+github: [mrki]  # Replace with your GitHub username
+custom:
+  - https://mrki.dev/sponsor
+  - https://paypal.me/mrki

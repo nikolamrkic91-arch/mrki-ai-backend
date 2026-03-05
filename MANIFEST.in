@@ -1,0 +1,30 @@
+# Include additional files in the distribution
+
+# Documentation
+include README.md
+include LICENSE
+include CHANGELOG.md
+include NOTICE
+include SECURITY.md
+include CODE_OF_CONDUCT.md
+include CONTRIBUTING.md
+
+# Configuration examples
+include config.example.yaml
+include docker-compose.yml
+include Dockerfile
+
+# Scripts
+recursive-include scripts *.sh
+
+# Documentation
+recursive-include docs *.md *.rst *.txt *.py *.yml
+
+# Exclude
+exclude .gitignore
+exclude .dockerignore
+exclude renovate.json
+
+global-exclude __pycache__
+global-exclude *.py[co]
+global-exclude .DS_Store

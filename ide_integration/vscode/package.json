@@ -1,0 +1,294 @@
+{
+  "name": "mrki-vscode",
+  "displayName": "Mrki - AI-Powered Development Environment",
+  "description": "Official VS Code extension for Mrki - intelligent code completion, inline suggestions, and AI-powered development",
+  "version": "1.0.0",
+  "publisher": "mrki-team",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Machine Learning",
+    "Debuggers",
+    "Other"
+  ],
+  "keywords": [
+    "mrki",
+    "ai",
+    "code completion",
+    "inline suggestions",
+    "language server"
+  ],
+  "activationEvents": [
+    "onLanguage:python",
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onLanguage:rust",
+    "onLanguage:go",
+    "onCommand:mrki.start",
+    "onDebug"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "mrki.start",
+        "title": "Start Mrki",
+        "category": "Mrki",
+        "icon": "$(play)"
+      },
+      {
+        "command": "mrki.stop",
+        "title": "Stop Mrki",
+        "category": "Mrki",
+        "icon": "$(stop)"
+      },
+      {
+        "command": "mrki.restart",
+        "title": "Restart Mrki",
+        "category": "Mrki",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "mrki.status",
+        "title": "Show Status",
+        "category": "Mrki"
+      },
+      {
+        "command": "mrki.complete",
+        "title": "Trigger Completion",
+        "category": "Mrki",
+        "keybinding": {
+          "command": "mrki.complete",
+          "key": "ctrl+space",
+          "mac": "cmd+space",
+          "when": "editorTextFocus"
+        }
+      },
+      {
+        "command": "mrki.inlineSuggest",
+        "title": "Accept Inline Suggestion",
+        "category": "Mrki",
+        "keybinding": {
+          "command": "mrki.inlineSuggest",
+          "key": "tab",
+          "when": "mrki.inlineSuggestionVisible && editorTextFocus"
+        }
+      },
+      {
+        "command": "mrki.explainCode",
+        "title": "Explain Selected Code",
+        "category": "Mrki"
+      },
+      {
+        "command": "mrki.generateTests",
+        "title": "Generate Tests",
+        "category": "Mrki"
+      },
+      {
+        "command": "mrki.refactor",
+        "title": "Refactor Code",
+        "category": "Mrki"
+      },
+      {
+        "command": "mrki.openChat",
+        "title": "Open AI Chat",
+        "category": "Mrki",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "mrki.debug.start",
+        "title": "Start Debug Session",
+        "category": "Mrki Debug"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "mrki.explainCode",
+          "group": "mrki@1",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "mrki.generateTests",
+          "group": "mrki@2",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "mrki.refactor",
+          "group": "mrki@3",
+          "when": "editorHasSelection"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "mrki.openChat",
+          "group": "navigation",
+          "when": "view == mrki.chatView"
+        }
+      ]
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "mrki.chatView",
+          "name": "Mrki Chat",
+          "when": "mrki.enabled"
+        },
+        {
+          "id": "mrki.statusView",
+          "name": "Mrki Status",
+          "when": "mrki.enabled"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "mrki-sidebar",
+          "title": "Mrki",
+          "icon": "$(sparkle)"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Mrki",
+      "properties": {
+        "mrki.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Mrki extension"
+        },
+        "mrki.server.host": {
+          "type": "string",
+          "default": "localhost",
+          "description": "Mrki language server host"
+        },
+        "mrki.server.port": {
+          "type": "number",
+          "default": 8765,
+          "description": "Mrki language server port"
+        },
+        "mrki.completion.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable AI-powered code completion"
+        },
+        "mrki.completion.inlineEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable inline suggestions"
+        },
+        "mrki.completion.delay": {
+          "type": "number",
+          "default": 100,
+          "description": "Delay before triggering completion (ms)"
+        },
+        "mrki.completion.maxTokens": {
+          "type": "number",
+          "default": 150,
+          "description": "Maximum tokens for completion"
+        },
+        "mrki.debug.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable debug adapter protocol"
+        },
+        "mrki.debug.port": {
+          "type": "number",
+          "default": 8766,
+          "description": "Debug adapter port"
+        },
+        "mrki.chat.model": {
+          "type": "string",
+          "default": "mrki-large",
+          "enum": ["mrki-small", "mrki-medium", "mrki-large"],
+          "description": "AI model for chat"
+        },
+        "mrki.telemetry.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable telemetry"
+        }
+      }
+    },
+    "debuggers": [
+      {
+        "type": "mrki",
+        "label": "Mrki Debug",
+        "program": "./out/debugAdapter.js",
+        "runtime": "node",
+        "configurationAttributes": {
+          "launch": {
+            "required": ["program"],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "Path to program"
+              },
+              "args": {
+                "type": "array",
+                "description": "Command line arguments"
+              },
+              "env": {
+                "type": "object",
+                "description": "Environment variables"
+              },
+              "cwd": {
+                "type": "string",
+                "description": "Working directory"
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "mrki",
+            "request": "launch",
+            "name": "Debug with Mrki",
+            "program": "${workspaceFolder}/main.py"
+          }
+        ]
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "mrki.complete",
+        "key": "ctrl+shift+space",
+        "mac": "cmd+shift+space",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "mrki.openChat",
+        "key": "ctrl+shift+m",
+        "mac": "cmd+shift+m"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3",
+    "vsce": "^2.15.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1",
+    "vscode-debugadapter": "^1.51.0",
+    "ws": "^8.16.0"
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "name": "mrki-client",
+  "version": "1.0.0",
+  "description": "Cross-platform client for Mrki - React Native (iOS/Android) + Electron (Windows)",
+  "main": "desktop/main.js",
+  "scripts": {
+    "mobile:start": "react-native start",
+    "mobile:ios": "react-native run-ios",
+    "mobile:android": "react-native run-android",
+    "desktop:start": "electron .",
+    "desktop:build": "electron-builder",
+    "desktop:pack": "electron-builder --dir",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "18.2.0",
+    "react-native": "0.73.0",
+    "react-native-web": "0.19.9",
+    "socket.io-client": "4.7.4",
+    "zustand": "4.4.7"
+  },
+  "devDependencies": {
+    "@types/react": "18.2.45",
+    "@types/react-native": "0.72.8",
+    "@typescript-eslint/eslint-plugin": "6.15.0",
+    "@typescript-eslint/parser": "6.15.0",
+    "electron": "28.0.0",
+    "electron-builder": "24.9.1",
+    "eslint": "8.56.0",
+    "metro-react-native-babel-preset": "0.77.0",
+    "typescript": "5.3.3"
+  },
+  "build": {
+    "appId": "com.mrki.app",
+    "productName": "Mrki",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "desktop/**/*",
+      "shared/**/*",
+      "src/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

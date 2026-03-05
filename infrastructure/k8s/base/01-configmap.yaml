@@ -1,0 +1,87 @@
+# =============================================================================
+# Mrki Application ConfigMap
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mrki-config
+  namespace: mrki-apps
+data:
+  # Application Configuration
+  APP_NAME: "Mrki"
+  APP_ENV: "production"
+  APP_DEBUG: "false"
+  APP_URL: "https://api.mrki.io"
+  
+  # Server Configuration
+  SERVER_PORT: "8080"
+  SERVER_TIMEOUT_READ: "30s"
+  SERVER_TIMEOUT_WRITE: "30s"
+  SERVER_TIMEOUT_IDLE: "120s"
+  
+  # Database Configuration
+  DB_DRIVER: "postgres"
+  DB_HOST: "mrki-postgres.mrki-data.svc.cluster.local"
+  DB_PORT: "5432"
+  DB_NAME: "mrki"
+  DB_SSL_MODE: "require"
+  DB_MAX_OPEN_CONNS: "25"
+  DB_MAX_IDLE_CONNS: "5"
+  DB_CONN_MAX_LIFETIME: "5m"
+  
+  # Redis Configuration
+  REDIS_HOST: "mrki-redis.mrki-data.svc.cluster.local"
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+  REDIS_POOL_SIZE: "10"
+  REDIS_MIN_IDLE_CONNS: "2"
+  
+  # MongoDB Configuration
+  MONGODB_URI: "mongodb://mrki-mongodb.mrki-data.svc.cluster.local:27017"
+  MONGODB_DATABASE: "mrki"
+  
+  # Cache Configuration
+  CACHE_TTL: "300"
+  CACHE_PREFIX: "mrki:"
+  
+  # Queue Configuration
+  QUEUE_DRIVER: "redis"
+  QUEUE_CONCURRENCY: "10"
+  
+  # Feature Flags
+  FEATURE_RATE_LIMITING: "true"
+  FEATURE_CACHING: "true"
+  FEATURE_METRICS: "true"
+  FEATURE_TRACING: "true"
+  
+  # Logging Configuration
+  LOG_LEVEL: "info"
+  LOG_FORMAT: "json"
+  
+  # CORS Configuration
+  CORS_ALLOWED_ORIGINS: "https://mrki.io,https://app.mrki.io"
+  CORS_ALLOWED_METHODS: "GET,POST,PUT,DELETE,OPTIONS,PATCH"
+  CORS_ALLOWED_HEADERS: "Authorization,Content-Type,X-Request-ID"
+  
+  # Rate Limiting
+  RATE_LIMIT_REQUESTS: "100"
+  RATE_LIMIT_WINDOW: "60"
+  
+  # Pagination Defaults
+  DEFAULT_PAGE_SIZE: "20"
+  MAX_PAGE_SIZE: "100"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mrki-config-staging
+  namespace: mrki-staging
+data:
+  APP_NAME: "Mrki Staging"
+  APP_ENV: "staging"
+  APP_DEBUG: "true"
+  APP_URL: "https://api-staging.mrki.io"
+  SERVER_PORT: "8080"
+  DB_HOST: "mrki-postgres-staging.mrki-data.svc.cluster.local"
+  REDIS_HOST: "mrki-redis-staging.mrki-data.svc.cluster.local"
+  LOG_LEVEL: "debug"

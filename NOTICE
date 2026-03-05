@@ -1,0 +1,133 @@
+Mrki
+Copyright 2024 Mrki Project Authors
+
+This product includes software developed by the Mrki Project
+(https://mrki.dev).
+
+THIRD-PARTY DEPENDENCIES
+========================
+
+This software uses the following open-source packages:
+
+Python Standard Library
+- License: PSF License Agreement
+- https://docs.python.org/3/license.html
+
+FastAPI
+- License: MIT License
+- Copyright: Sebastián Ramírez
+- https://fastapi.tiangolo.com/
+
+SQLAlchemy
+- License: MIT License
+- Copyright: SQLAlchemy authors and contributors
+- https://www.sqlalchemy.org/
+
+Pydantic
+- License: MIT License
+- Copyright: Samuel Colvin
+- https://docs.pydantic.dev/
+
+APScheduler
+- License: MIT License
+- Copyright: Alex Grönholm
+- https://apscheduler.readthedocs.io/
+
+Click
+- License: BSD 3-Clause License
+- Copyright: Armin Ronacher
+- https://click.palletsprojects.com/
+
+Rich
+- License: MIT License
+- Copyright: Will McGugan
+- https://rich.readthedocs.io/
+
+Jinja2
+- License: BSD 3-Clause License
+- Copyright: Armin Ronacher
+- https://jinja.palletsprojects.com/
+
+python-jose
+- License: MIT License
+- Copyright: Michael Davis
+- https://python-jose.readthedocs.io/
+
+passlib
+- License: BSD License
+- Copyright: Eli Collins
+- https://passlib.readthedocs.io/
+
+httpx
+- License: BSD 3-Clause License
+- Copyright: Encode OSS Ltd
+- https://www.python-httpx.org/
+
+alembic
+- License: MIT License
+- Copyright: Mike Bayer
+- https://alembic.sqlalchemy.org/
+
+croniter
+- License: MIT License
+- Copyright: Kiorky
+- https://github.com/kiorky/croniter
+
+python-dateutil
+- License: Apache License 2.0, BSD 3-Clause License
+- Copyright: Gustavo Niemeyer, Yaron de Leeuw
+- https://dateutil.readthedocs.io/
+
+tenacity
+- License: Apache License 2.0
+- Copyright: Julien Danjou
+- https://github.com/jd/tenacity
+
+structlog
+- License: Apache License 2.0, MIT License
+- Copyright: Hynek Schlawack
+- https://www.structlog.org/
+
+uvicorn
+- License: BSD 3-Clause License
+- Copyright: Encode OSS Ltd
+- https://www.uvicorn.org/
+
+starlette
+- License: BSD 3-Clause License
+- Copyright: Encode OSS Ltd
+- https://www.starlette.io/
+
+For the complete list of dependencies and their licenses, please run:
+    pip-licenses
+
+FONTS AND ICONS
+===============
+
+This software may include fonts and icons from:
+
+- Font Awesome: CC BY 4.0 License
+- Google Fonts: SIL Open Font License
+
+ACKNOWLEDGMENTS
+===============
+
+We thank the following individuals and organizations for their contributions
+to the open-source community that made this project possible:
+
+- The Python Software Foundation
+- The FastAPI community
+- All contributors to the dependencies listed above
+- Our users and community members
+
+TRADEMARKS
+==========
+
+"Mrki" and the Mrki logo are trademarks of the Mrki Project.
+
+DISCLAIMER
+==========
+
+THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.

@@ -1,0 +1,62 @@
+Personal Use License
+
+Version 1.0, January 2024
+
+Copyright (c) 2024 Mrki Project Authors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to use
+the Software for personal, non-commercial purposes only, subject to the
+following conditions:
+
+1. PERSONAL USE ONLY
+   The Software may be used for personal, educational, research, and 
+   non-commercial purposes only. Commercial use, including but not limited to
+   use in business operations, products, or services, is strictly prohibited
+   without explicit written permission from the copyright holders.
+
+2. REDISTRIBUTION
+   Redistribution of the Software, in source or binary form, is permitted
+   provided that:
+   a) The above copyright notice and this permission notice are included
+   b) The Software is not modified in a way that removes or alters this license
+   c) The Software is not sold or used for commercial gain
+
+3. MODIFICATION
+   Modifications to the Software for personal use are permitted. Distribution
+   of modified versions is subject to the same conditions as redistribution.
+
+4. NO WARRANTY
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+   DEALINGS IN THE SOFTWARE.
+
+5. ATTRIBUTION
+   Any use of the Software must include proper attribution to the original
+   authors and the Mrki project.
+
+6. TERMINATION
+   This license automatically terminates if you fail to comply with any of
+   its terms. Upon termination, you must cease all use of the Software and
+   destroy all copies.
+
+7. COMMERCIAL LICENSING
+   For commercial use, enterprise features, or redistribution rights, please
+   contact: licensing@mrki.dev
+
+For questions about this license, please contact:
+Mrki Licensing Team
+Email: licensing@mrki.dev
+Website: https://mrki.dev/licensing
+
+---
+
+THIRD-PARTY COMPONENTS
+
+This Software may include third-party components with their own licenses.
+Please refer to the NOTICE file for details on third-party dependencies and
+their respective licenses.

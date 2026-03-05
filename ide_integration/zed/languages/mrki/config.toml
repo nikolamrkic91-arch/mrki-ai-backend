@@ -1,0 +1,10 @@
+name = "Mrki"
+grammar = "mrki"
+path_suffixes = [".mrki"]
+line_comments = ["# "]
+autoclose_before = "}]\n"
+brackets = [
+    { start = "{", end = "}", close = true, newline = true },
+    { start = "[", end = "]", close = true, newline = true },
+    { start = "(", end = ")", close = true, newline = true },
+]

@@ -1,0 +1,26 @@
+# Mrki Visual Engine - Docker Compose
+# ====================================
+
+version: '3.8'
+
+services:
+  visual-engine:
+    build: .
+    container_name: mrki-visual-engine
+    ports:
+      - "8000:8000"
+    environment:
+      - MRKI_API_HOST=0.0.0.0
+      - MRKI_API_PORT=8000
+      - MRKI_LOG_LEVEL=info
+      - MRKI_DEFAULT_FRAMEWORK=react
+      - MRKI_DEFAULT_STYLE_SYSTEM=tailwind
+    volumes:
+      - ./uploads:/app/uploads
+      - ./outputs:/app/outputs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

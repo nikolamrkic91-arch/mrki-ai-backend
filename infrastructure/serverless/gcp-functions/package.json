@@ -1,0 +1,28 @@
+{
+  "name": "mrki-gcp-functions",
+  "version": "1.0.0",
+  "description": "Mrki GCP Cloud Functions",
+  "main": "index.js",
+  "scripts": {
+    "start": "functions-framework --target=mrkiHttpHandler",
+    "deploy:http": "gcloud functions deploy mrkiHttpHandler --runtime nodejs20 --trigger-http --entry-point mrkiHttpHandler",
+    "deploy:pubsub": "gcloud functions deploy mrkiPubSubHandler --runtime nodejs20 --trigger-topic mrki-events --entry-point mrkiPubSubHandler",
+    "deploy:storage": "gcloud functions deploy mrkiStorageHandler --runtime nodejs20 --trigger-bucket mrki-data --entry-point mrkiStorageHandler",
+    "deploy:scheduled": "gcloud functions deploy mrkiScheduledHandler --runtime nodejs20 --trigger-topic scheduled-events --entry-point mrkiScheduledHandler",
+    "test": "jest",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@google-cloud/functions-framework": "^3.3.0",
+    "@google-cloud/pubsub": "^4.0.0",
+    "@google-cloud/storage": "^7.0.0",
+    "@google-cloud/firestore": "^7.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "eslint": "^8.50.0"
+  },
+  "engines": {
+    "node": "20"
+  }
+}

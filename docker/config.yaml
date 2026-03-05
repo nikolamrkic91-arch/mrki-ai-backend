@@ -1,0 +1,59 @@
+# Docker-specific Mrki configuration
+
+server:
+  host: 0.0.0.0
+  port: 8080
+  debug: false
+  workers: 4
+
+database:
+  url: ${MRKI_DATABASE_URL:-sqlite:///app/data/mrki.db}
+  pool_size: 5
+  max_overflow: 10
+
+security:
+  secret_key: ${MRKI_SECURITY_SECRET_KEY:-change-this-in-production}
+  jwt_expiration: 3600
+  rate_limit:
+    enabled: true
+    requests: 100
+    window: 60
+
+logging:
+  level: ${MRKI_LOG_LEVEL:-INFO}
+  format: json
+
+plugins:
+  directory: /app/plugins
+  auto_load: true
+  enabled:
+    - http
+    - database
+    - email
+
+scheduler:
+  enabled: true
+  max_workers: 10
+  timezone: UTC
+
+web:
+  enabled: true
+  title: Mrki
+  theme: default
+
+cache:
+  backend: ${MRKI_CACHE_BACKEND:-memory}
+  redis:
+    url: ${MRKI_REDIS_URL:-redis://localhost:6379/0}
+
+queue:
+  backend: ${MRKI_QUEUE_BACKEND:-memory}
+  redis:
+    url: ${MRKI_REDIS_URL:-redis://localhost:6379/0}
+
+monitoring:
+  enabled: true
+  endpoint: /metrics
+  health:
+    enabled: true
+    endpoint: /health

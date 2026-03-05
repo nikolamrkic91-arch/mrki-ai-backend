@@ -1,0 +1,127 @@
+# =============================================================================
+# Mrki API Service
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: mrki-api
+  namespace: mrki-apps
+  labels:
+    app: mrki-api
+    tier: backend
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+spec:
+  type: ClusterIP
+  selector:
+    app: mrki-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+    - name: grpc
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
+  sessionAffinity: None
+---
+# =============================================================================
+# Mrki Worker Service (for metrics)
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: mrki-worker
+  namespace: mrki-apps
+  labels:
+    app: mrki-worker
+    tier: worker
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+spec:
+  type: ClusterIP
+  selector:
+    app: mrki-worker
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+---
+# =============================================================================
+# Mrki Web Service
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: mrki-web
+  namespace: mrki-apps
+  labels:
+    app: mrki-web
+    tier: frontend
+spec:
+  type: ClusterIP
+  selector:
+    app: mrki-web
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+      protocol: TCP
+---
+# =============================================================================
+# Headless Service for StatefulSets
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: mrki-postgres-headless
+  namespace: mrki-data
+  labels:
+    app: mrki-postgres
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: mrki-postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mrki-redis-headless
+  namespace: mrki-data
+  labels:
+    app: mrki-redis
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: mrki-redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mrki-mongodb-headless
+  namespace: mrki-data
+  labels:
+    app: mrki-mongodb
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: mrki-mongodb
+  ports:
+    - name: mongodb
+      port: 27017
+      targetPort: 27017

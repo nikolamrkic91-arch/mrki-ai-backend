@@ -1,0 +1,61 @@
+name: Documentation Issue
+about: Report issues with documentation or suggest improvements
+title: '[DOCS] '
+labels: ['documentation', 'triage']
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help us improve our documentation! Report issues or suggest improvements.
+
+  - type: dropdown
+    id: doc_type
+    attributes:
+      label: Documentation Type
+      description: What type of documentation is this about?
+      options:
+        - README
+        - API Documentation
+        - User Guide
+        - Installation Guide
+        - Configuration Reference
+        - Contributing Guide
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: issue
+    attributes:
+      label: Issue Description
+      description: Describe the documentation issue or improvement.
+      placeholder: |
+        - What's unclear or missing?
+        - What information were you looking for?
+        - Where did you expect to find it?
+    validations:
+      required: true
+
+  - type: input
+    id: location
+    attributes:
+      label: Documentation Location
+      description: Provide URL or file path if applicable.
+      placeholder: e.g., https://mrki.readthedocs.io/en/latest/api.html
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested Improvement
+      description: If you have a suggestion for how to improve the documentation, please describe it.
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our Code of Conduct.
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

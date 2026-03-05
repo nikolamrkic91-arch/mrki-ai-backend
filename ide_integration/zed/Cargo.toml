@@ -1,0 +1,20 @@
+[package]
+name = "mrki-zed"
+version = "1.0.0"
+edition = "2021"
+authors = ["Mrki Team <team@mrki.dev>"]
+description = "Mrki extension for Zed editor"
+license = "MIT"
+repository = "https://github.com/mrki/mrki"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+zed_extension_api = "0.1"
+anyhow = "1.0"
+
+[dev-dependencies]
+tokio = { version = "1.0", features = ["full"] }

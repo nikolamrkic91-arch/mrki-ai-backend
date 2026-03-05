@@ -1,0 +1,200 @@
+# =============================================================================
+# MongoDB StatefulSet for Mrki
+# =============================================================================
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mrki-mongodb
+  namespace: mrki-data
+  labels:
+    app: mrki-mongodb
+    tier: database
+spec:
+  serviceName: mrki-mongodb-headless
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mrki-mongodb
+  template:
+    metadata:
+      labels:
+        app: mrki-mongodb
+        tier: database
+    spec:
+      serviceAccountName: mrki-mongodb
+      securityContext:
+        runAsUser: 999
+        fsGroup: 999
+      containers:
+        - name: mongodb
+          image: mongo:7.0
+          command:
+            - mongod
+            - '--bind_ip_all'
+            - '--replSet'
+            - rs0
+            - '--auth'
+            - '--keyFile'
+            - /etc/mongodb-keyfile/keyfile
+          ports:
+            - name: mongodb
+              containerPort: 27017
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mrki-mongodb-secret
+                  key: username
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mrki-mongodb-secret
+                  key: password
+            - name: MONGO_INITDB_DATABASE
+              value: "mrki"
+          livenessProbe:
+            exec:
+              command:
+                - mongosh
+                - '--eval'
+                - 'db.adminCommand("ping")'
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+                - mongosh
+                - '--eval'
+                - 'db.adminCommand("ping")'
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          volumeMounts:
+            - name: data
+              mountPath: /data/db
+            - name: keyfile
+              mountPath: /etc/mongodb-keyfile
+              readOnly: true
+          securityContext:
+            allowPrivilegeEscalation: false
+      volumes:
+        - name: keyfile
+          secret:
+            secretName: mrki-mongodb-keyfile
+            defaultMode: 0400
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: gp3
+        resources:
+          requests:
+            storage: 20Gi
+---
+# =============================================================================
+# MongoDB Secrets
+# =============================================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mrki-mongodb-secret
+  namespace: mrki-data
+type: Opaque
+stringData:
+  username: "mrki_admin"
+  password: "CHANGE_ME_IN_PRODUCTION"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mrki-mongodb-keyfile
+  namespace: mrki-data
+type: Opaque
+stringData:
+  keyfile: "CHANGE_ME_WITH_A_LONG_RANDOM_STRING_FOR_REPLICA_SET_KEY"
+---
+# =============================================================================
+# MongoDB Service
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: mrki-mongodb
+  namespace: mrki-data
+  labels:
+    app: mrki-mongodb
+spec:
+  type: ClusterIP
+  selector:
+    app: mrki-mongodb
+  ports:
+    - name: mongodb
+      port: 27017
+      targetPort: 27017
+---
+# =============================================================================
+# MongoDB ServiceAccount
+# =============================================================================
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mrki-mongodb
+  namespace: mrki-data
+---
+# =============================================================================
+# MongoDB Replica Set Init Job
+# =============================================================================
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mrki-mongodb-init
+  namespace: mrki-data
+spec:
+  template:
+    spec:
+      containers:
+        - name: mongodb-init
+          image: mongo:7.0
+          command:
+            - bash
+            - '-c'
+            - |
+              echo "Waiting for MongoDB to be ready..."
+              sleep 30
+              
+              mongosh --host mrki-mongodb-0.mrki-mongodb-headless.mrki-data.svc.cluster.local:27017 \
+                -u $(MONGO_INITDB_ROOT_USERNAME) \
+                -p $(MONGO_INITDB_ROOT_PASSWORD) \
+                --authenticationDatabase admin \
+                --eval '
+                  rs.initiate({
+                    _id: "rs0",
+                    members: [
+                      { _id: 0, host: "mrki-mongodb-0.mrki-mongodb-headless.mrki-data.svc.cluster.local:27017" },
+                      { _id: 1, host: "mrki-mongodb-1.mrki-mongodb-headless.mrki-data.svc.cluster.local:27017" },
+                      { _id: 2, host: "mrki-mongodb-2.mrki-mongodb-headless.mrki-data.svc.cluster.local:27017" }
+                    ]
+                  })
+                '
+              
+              echo "Replica set initialized"
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mrki-mongodb-secret
+                  key: username
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mrki-mongodb-secret
+                  key: password
+      restartPolicy: OnFailure

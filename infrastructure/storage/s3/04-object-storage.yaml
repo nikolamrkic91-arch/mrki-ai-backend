@@ -1,0 +1,336 @@
+# =============================================================================
+# Object Storage Configuration for Mrki
+# Supports AWS S3, GCP Cloud Storage, Azure Blob Storage via Rook or MinIO
+# =============================================================================
+
+# =============================================================================
+# MinIO Deployment (S3-compatible object storage)
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: mrki-data
+  labels:
+    app: minio
+    tier: storage
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+        tier: storage
+    spec:
+      serviceAccountName: minio
+      securityContext:
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: minio
+          image: minio/minio:RELEASE.2023-11-20T22-40-07Z
+          command:
+            - minio
+            - server
+            - '--console-address'
+            - ':9001'
+            - http://minio-{0...3}.minio-svc.mrki-data.svc.cluster.local/data{0...1}
+          ports:
+            - name: s3
+              containerPort: 9000
+            - name: console
+              containerPort: 9001
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: root-user
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: root-password
+            - name: MINIO_BROWSER
+              value: "on"
+            - name: MINIO_PROMETHEUS_AUTH_TYPE
+              value: "public"
+          livenessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: s3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: s3
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "4Gi"
+              cpu: "2000m"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          securityContext:
+            allowPrivilegeEscalation: false
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: gp3
+        resources:
+          requests:
+            storage: 100Gi
+---
+# =============================================================================
+# MinIO Service
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: mrki-data
+  labels:
+    app: minio
+spec:
+  type: ClusterIP
+  selector:
+    app: minio
+  ports:
+    - name: s3
+      port: 9000
+      targetPort: 9000
+    - name: console
+      port: 9001
+      targetPort: 9001
+---
+# =============================================================================
+# MinIO Headless Service (for distributed mode)
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-svc
+  namespace: mrki-data
+  labels:
+    app: minio
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: minio
+  ports:
+    - name: s3
+      port: 9000
+      targetPort: 9000
+---
+# =============================================================================
+# MinIO Ingress
+# =============================================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio-console
+  namespace: mrki-data
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+    - hosts:
+        - storage.mrki.io
+      secretName: minio-console-tls
+  rules:
+    - host: storage.mrki.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9001
+---
+# =============================================================================
+# MinIO Secrets
+# =============================================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: minio-credentials
+  namespace: mrki-data
+type: Opaque
+stringData:
+  root-user: "mrki-admin"
+  root-password: "CHANGE_ME_IN_PRODUCTION"
+---
+# =============================================================================
+# MinIO ServiceAccount
+# =============================================================================
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: minio
+  namespace: mrki-data
+---
+# =============================================================================
+# MinIO Bucket Creation Job
+# =============================================================================
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-create-buckets
+  namespace: mrki-data
+spec:
+  template:
+    spec:
+      containers:
+        - name: mc
+          image: minio/mc:RELEASE.2023-11-20T16-30-59Z
+          command:
+            - /bin/sh
+            - '-c'
+            - |
+              # Wait for MinIO to be ready
+              sleep 30
+              
+              # Configure mc
+              mc alias set local http://minio:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
+              
+              # Create buckets
+              mc mb local/mrki-assets --ignore-existing
+              mc mb local/mrki-backups --ignore-existing
+              mc mb local/mrki-logs --ignore-existing
+              
+              # Set bucket policies
+              mc policy set download local/mrki-assets/public
+              mc policy set none local/mrki-backups
+              mc policy set none local/mrki-logs
+              
+              # Enable versioning
+              mc version enable local/mrki-assets
+              mc version enable local/mrki-backups
+              
+              # Set lifecycle policies
+              mc ilm add local/mrki-assets --expiry-days "365" --prefix "temp/"
+              mc ilm add local/mrki-backups --transition-days "30" --storage-class "GLACIER"
+              
+              echo "Buckets created successfully"
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: root-user
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: root-password
+      restartPolicy: OnFailure
+---
+# =============================================================================
+# Rook-Ceph Storage Cluster (Alternative to MinIO)
+# =============================================================================
+# apiVersion: ceph.rook.io/v1
+# kind: CephCluster
+# metadata:
+#   name: rook-ceph
+#   namespace: rook-ceph
+# spec:
+#   cephVersion:
+#     image: ceph/ceph:v18.2.0
+#     allowUnsupported: false
+#   dataDirHostPath: /var/lib/rook
+#   mon:
+#     count: 3
+#     allowMultiplePerNode: false
+#   mgr:
+#     modules:
+#       - name: pg_autoscaler
+#         enabled: true
+#   dashboard:
+#     enabled: true
+#     ssl: true
+#   monitoring:
+#     enabled: true
+#   storage:
+#     useAllNodes: true
+#     useAllDevices: true
+#     config:
+#       osdsPerDevice: "1"
+#   resources:
+#     mon:
+#       requests:
+#         cpu: "500m"
+#         memory: "1Gi"
+#       limits:
+#         cpu: "1000m"
+#         memory: "2Gi"
+#     mgr:
+#       requests:
+#         cpu: "500m"
+#         memory: "1Gi"
+#       limits:
+#         cpu: "1000m"
+#         memory: "2Gi"
+#     osd:
+#       requests:
+#         cpu: "500m"
+#         memory: "2Gi"
+#       limits:
+#         cpu: "2000m"
+#         memory: "4Gi"
+---
+# =============================================================================
+# Object Bucket Claim (OBC) for Mrki Applications
+# =============================================================================
+apiVersion: objectbucket.io/v1alpha1
+kind: ObjectBucketClaim
+metadata:
+  name: mrki-assets-bucket
+  namespace: mrki-apps
+spec:
+  generateBucketName: mrki-assets
+  storageClassName: rook-ceph-bucket
+---
+# =============================================================================
+# External S3 Secret (for using cloud provider S3)
+# =============================================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-s3-credentials
+  namespace: mrki-apps
+type: Opaque
+stringData:
+  AWS_ACCESS_KEY_ID: "CHANGE_ME"
+  AWS_SECRET_ACCESS_KEY: "CHANGE_ME"
+  AWS_REGION: "us-east-1"
+  S3_BUCKET_NAME: "mrki-assets-production"
+---
+# =============================================================================
+# External GCS Secret
+# =============================================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gcs-credentials
+  namespace: mrki-apps
+type: Opaque
+stringData:
+  GOOGLE_APPLICATION_CREDENTIALS: "/etc/gcp/key.json"
+  GCS_BUCKET_NAME: "mrki-assets-production"

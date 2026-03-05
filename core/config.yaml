@@ -1,0 +1,493 @@
+# Mrki Core Architecture Configuration
+# This file defines the configuration schema for the Mrki multi-agent system
+# Version: 1.0.0
+
+# =============================================================================
+# ORCHESTRATOR CONFIGURATION
+# =============================================================================
+orchestrator:
+  # Maximum number of concurrent agents (default: 100)
+  max_concurrent_agents: 100
+  
+  # Maximum parallel tool calls target (default: 1500)
+  max_parallel_tool_calls: 1500
+  
+  # Default task timeout in seconds (default: 300)
+  default_timeout_seconds: 300.0
+  
+  # Maximum retry attempts for failed tasks (default: 3)
+  max_retries: 3
+  
+  # Enable cross-agent verification (default: true)
+  enable_verification: true
+  
+  # Fraction of tasks to verify (default: 0.3 = 30%)
+  verification_sample_rate: 0.3
+  
+  # Token budget for context windows (default: 256000)
+  token_budget: 256000
+  
+  # Enable result caching (default: true)
+  enable_caching: true
+  
+  # Cache TTL in seconds (default: 3600 = 1 hour)
+  cache_ttl_seconds: 3600
+  
+  # Enable metrics collection (default: true)
+  metrics_enabled: true
+  
+  # Default execution mode: parallel, sequential, pipeline, dag
+  execution_mode: parallel
+
+# =============================================================================
+# AGENT POOL CONFIGURATION
+# =============================================================================
+agent_pool:
+  # Default minimum instances per agent type (default: 1)
+  default_min_instances: 1
+  
+  # Default maximum instances per agent type (default: 50)
+  default_max_instances: 50
+  
+  # Scaling policy: static, dynamic, predictive, adaptive
+  default_scaling_policy: dynamic
+  
+  # Scale up threshold (queue depth ratio) (default: 0.7)
+  scale_up_threshold: 0.7
+  
+  # Scale down threshold (default: 0.2)
+  scale_down_threshold: 0.2
+  
+  # Health check interval in seconds (default: 30)
+  health_check_interval_seconds: 30.0
+  
+  # Idle timeout before agent termination in seconds (default: 300)
+  idle_timeout_seconds: 300.0
+  
+  # Maximum consecutive health failures before recovery (default: 3)
+  max_health_failures: 3
+  
+  # Maximum recovery attempts (default: 3)
+  recovery_attempts: 3
+
+# =============================================================================
+# AGENT TYPE DEFINITIONS
+# =============================================================================
+agent_types:
+  # Research Agent
+  researcher:
+    description: "Gathers and synthesizes information from multiple sources"
+    supported_tasks:
+      - research
+      - search
+      - information_gathering
+      - fact_checking
+    max_concurrent_tasks: 5
+    average_tokens_per_task: 4096
+    context_window_size: 128000
+    specializations:
+      - web_search
+      - document_analysis
+      - data_synthesis
+    required_tools:
+      - web_search
+      - document_retrieval
+      - summarization
+  
+  # Code Generation Agent
+  code_generator:
+    description: "Generates, reviews, and optimizes code"
+    supported_tasks:
+      - code_generation
+      - code_review
+      - refactoring
+      - debugging
+    max_concurrent_tasks: 3
+    average_tokens_per_task: 8192
+    context_window_size: 128000
+    specializations:
+      - python
+      - javascript
+      - typescript
+      - rust
+      - go
+    required_tools:
+      - code_executor
+      - syntax_checker
+      - test_runner
+      - linter
+  
+  # Data Analyst Agent
+  data_analyst:
+    description: "Analyzes data and generates insights"
+    supported_tasks:
+      - data_analysis
+      - statistical_analysis
+      - visualization
+      - reporting
+    max_concurrent_tasks: 4
+    average_tokens_per_task: 6144
+    context_window_size: 128000
+    specializations:
+      - pandas
+      - sql
+      - statistics
+      - machine_learning
+    required_tools:
+      - data_loader
+      - analysis_engine
+      - visualization
+      - query_builder
+  
+  # Writer Agent
+  writer:
+    description: "Creates and edits written content"
+    supported_tasks:
+      - writing
+      - editing
+      - summarization
+      - content_creation
+    max_concurrent_tasks: 5
+    average_tokens_per_task: 4096
+    context_window_size: 128000
+    specializations:
+      - technical_writing
+      - creative_writing
+      - documentation
+      - copywriting
+    required_tools:
+      - grammar_checker
+      - plagiarism_detector
+      - style_guide
+  
+  # Planner Agent
+  planner:
+    description: "Creates plans and strategies"
+    supported_tasks:
+      - planning
+      - scheduling
+      - resource_allocation
+      - strategy
+    max_concurrent_tasks: 3
+    average_tokens_per_task: 4096
+    context_window_size: 128000
+    specializations:
+      - project_planning
+      - time_management
+      - resource_planning
+    required_tools:
+      - calendar
+      - resource_allocator
+      - scheduler
+  
+  # Integrator Agent
+  integrator:
+    description: "Integrates multiple components and systems"
+    supported_tasks:
+      - integration
+      - synthesis
+      - orchestration
+      - coordination
+    max_concurrent_tasks: 5
+    average_tokens_per_task: 5120
+    context_window_size: 128000
+    specializations:
+      - api_integration
+      - data_integration
+      - workflow_orchestration
+    required_tools:
+      - integration_tester
+      - validator
+      - connector
+  
+  # Verifier Agent
+  verifier:
+    description: "Verifies outputs and ensures quality"
+    supported_tasks:
+      - verification
+      - validation
+      - quality_assurance
+      - review
+    max_concurrent_tasks: 10
+    average_tokens_per_task: 2048
+    context_window_size: 64000
+    specializations:
+      - fact_checking
+      - consistency_check
+      - quality_review
+    required_tools:
+      - validator
+      - cross_reference
+      - checker
+
+# =============================================================================
+# TASK DECOMPOSER CONFIGURATION
+# =============================================================================
+task_decomposer:
+  # Maximum number of subtasks to create (default: 100)
+  max_subtasks: 100
+  
+  # Minimum tokens per subtask (default: 512)
+  min_subtask_tokens: 512
+  
+  # Maximum tokens per subtask (default: 32000)
+  max_subtask_tokens: 32000
+  
+  # Default timeout for subtasks in seconds (default: 300)
+  default_timeout_seconds: 300.0
+  
+  # Enable pattern-based task matching (default: true)
+  enable_pattern_matching: true
+  
+  # Enable dependency analysis (default: true)
+  enable_dependency_analysis: true
+  
+  # Parallel execution threshold (min subtasks for parallel mode) (default: 5)
+  parallel_threshold: 5
+  
+  # Complexity analysis recursion depth (default: 3)
+  complexity_analysis_depth: 3
+
+# =============================================================================
+# VERIFIER CONFIGURATION
+# =============================================================================
+verifier:
+  # Enable verification system (default: true)
+  enable_verification: true
+  
+  # Fraction of tasks to verify (default: 0.3)
+  verification_sample_rate: 0.3
+  
+  # Minimum confidence threshold for verification (default: 0.70)
+  min_confidence_threshold: 0.70
+  
+  # Consensus threshold (majority vote) (default: 0.66)
+  consensus_threshold: 0.66
+  
+  # Maximum verification time in seconds (default: 60)
+  max_verification_time_seconds: 60.0
+  
+  # Maximum verifiers for consensus (default: 3)
+  max_verifiers: 3
+  
+  # Enable self-correction (default: true)
+  enable_self_correction: true
+  
+  # Maximum correction attempts (default: 2)
+  max_correction_attempts: 2
+  
+  # Run verifications in parallel (default: true)
+  parallel_verification: true
+
+# =============================================================================
+# STATE MANAGER CONFIGURATION
+# =============================================================================
+state_manager:
+  # Maximum global state entries (default: 10000)
+  max_global_entries: 10000
+  
+  # Maximum session state entries per session (default: 1000)
+  max_session_entries: 1000
+  
+  # Maximum task state entries per task (default: 500)
+  max_task_entries: 500
+  
+  # Maximum agent state entries per agent (default: 200)
+  max_agent_entries: 200
+  
+  # Default TTL for state entries in seconds (default: null = no expiration)
+  default_ttl_seconds: null
+  
+  # Enable compression (default: true)
+  enable_compression: true
+  
+  # Compression threshold in tokens (default: 200000)
+  compression_threshold_tokens: 200000
+  
+  # Enable persistence (default: true)
+  persistence_enabled: true
+  
+  # Persistence backend: redis, disk, memory
+  persistence_backend: redis
+  
+  # Enable event-driven updates (default: true)
+  event_driven_updates: true
+  
+  # Token budget for context windows (default: 256000)
+  token_budget: 256000
+
+# =============================================================================
+# TOOL REGISTRY CONFIGURATION
+# =============================================================================
+tool_registry:
+  # Maximum concurrent tool calls (default: 1500)
+  max_concurrent_calls: 1500
+  
+  # Default tool timeout in seconds (default: 30)
+  default_timeout_seconds: 30.0
+  
+  # Enable batching (default: true)
+  enable_batching: true
+  
+  # Batch size for grouped execution (default: 100)
+  batch_size: 100
+  
+  # Batch timeout in milliseconds (default: 50)
+  batch_timeout_ms: 50.0
+  
+  # Enable caching (default: true)
+  enable_caching: true
+  
+  # Cache TTL in seconds (default: 300)
+  cache_ttl_seconds: 300
+  
+  # Enable metrics collection (default: true)
+  enable_metrics: true
+  
+  # Auto-load plugins on startup (default: true)
+  auto_load_plugins: true
+  
+  # Plugin paths to load
+  plugin_paths: []
+  
+  # Enable permission checking (default: true)
+  permission_checking: true
+
+# =============================================================================
+# PREDEFINED TOOLS
+# =============================================================================
+tools:
+  # Web Search Tool
+  web_search:
+    name: "Web Search"
+    description: "Search the web for information"
+    tool_type: api
+    category: web_search
+    parameters:
+      - name: query
+        type: string
+        description: "Search query"
+        required: true
+      - name: limit
+        type: integer
+        description: "Maximum results to return"
+        required: false
+        default: 10
+    timeout_seconds: 10.0
+    tags:
+      - search
+      - web
+  
+  # Code Executor Tool
+  code_executor:
+    name: "Code Executor"
+    description: "Execute code in a sandboxed environment"
+    tool_type: function
+    category: code_execution
+    parameters:
+      - name: code
+        type: string
+        description: "Code to execute"
+        required: true
+      - name: language
+        type: string
+        description: "Programming language"
+        required: true
+      - name: timeout
+        type: integer
+        description: "Execution timeout in seconds"
+        required: false
+        default: 30
+    timeout_seconds: 35.0
+    tags:
+      - code
+      - execution
+      - sandbox
+  
+  # Data Loader Tool
+  data_loader:
+    name: "Data Loader"
+    description: "Load data from various sources"
+    tool_type: function
+    category: data_processing
+    parameters:
+      - name: source
+        type: string
+        description: "Data source URL or path"
+        required: true
+      - name: format
+        type: string
+        description: "Data format (csv, json, etc.)"
+        required: false
+        default: auto
+    timeout_seconds: 30.0
+    tags:
+      - data
+      - loading
+      - io
+
+# =============================================================================
+# LOGGING CONFIGURATION
+# =============================================================================
+logging:
+  # Log level: debug, info, warning, error, critical
+  level: info
+  
+  # Log format: json, text
+  format: json
+  
+  # Enable structured logging (default: true)
+  structured: true
+  
+  # Log file path (null for stdout only)
+  file_path: null
+  
+  # Maximum log file size in MB
+  max_file_size_mb: 100
+  
+  # Number of backup log files
+  backup_count: 5
+
+# =============================================================================
+# PERFORMANCE CONFIGURATION
+# =============================================================================
+performance:
+  # Target speedup over sequential execution (default: 4.5)
+  target_speedup: 4.5
+  
+  # Enable performance monitoring (default: true)
+  enable_monitoring: true
+  
+  # Metrics collection interval in seconds (default: 10)
+  metrics_interval_seconds: 10.0
+  
+  # Performance history retention (number of data points) (default: 1000)
+  history_retention: 1000
+  
+  # Auto-optimization enabled (default: true)
+  auto_optimization: true
+
+# =============================================================================
+# SECURITY CONFIGURATION
+# =============================================================================
+security:
+  # Enable authentication (default: true)
+  enable_authentication: true
+  
+  # API key required for access (default: true)
+  require_api_key: true
+  
+  # Rate limiting enabled (default: true)
+  enable_rate_limiting: true
+  
+  # Rate limit requests per minute (default: 1000)
+  rate_limit_per_minute: 1000
+  
+  # Enable input validation (default: true)
+  enable_input_validation: true
+  
+  # Allowed tool categories (empty = all)
+  allowed_tool_categories: []
+  
+  # Blocked tool categories
+  blocked_tool_categories: []
