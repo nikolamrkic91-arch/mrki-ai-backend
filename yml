@@ -1,0 +1,10 @@
+services:
+  app:
+    build: .
+    ports: ["3000:3000"]
+    volumes: ["./src:/app/src"]
+    environment:
+      - LLM_ENDPOINT=http://ollama:11434
+  ollama:
+    image: ollama/ollama
+    volumes: ["./ollama_data:/root/.ollama"]
