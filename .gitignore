@@ -8,6 +8,10 @@ venv/
 ENV/
 env/
 .venv
+*.egg-info/
+dist/
+build/
+.eggs/
 
 # IDE
 .vscode/
@@ -27,7 +31,26 @@ logs/
 *.db
 *.sqlite
 
-# Node (for mobile)
+# Environment variables (NEVER commit secrets)
+.env
+
+# Node
 node_modules/
 *.apk
 *.ipa
+
+# Build artifacts
+*.zip
+.gradle/
+Pods/
+
+# Coverage
+htmlcov/
+.coverage
+coverage.xml
+
+# MyPy
+.mypy_cache/
+
+# Pytest
+.pytest_cache/

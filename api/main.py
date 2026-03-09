@@ -16,6 +16,7 @@ Sub-APIs included:
 
 from __future__ import annotations
 
+import os
 import time
 import traceback
 from contextlib import asynccontextmanager
@@ -27,6 +28,16 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 import structlog
+
+from api.middleware import (
+    AuthMiddleware,
+    RateLimitMiddleware,
+    create_access_token,
+    hash_password,
+    verify_password,
+    verify_token,
+    TokenResponse,
+)
 
 logger = structlog.get_logger("mrki.api")
 
@@ -572,10 +583,69 @@ async def gamedev_generate(request: Dict[str, Any]):
 
 
 # =============================================================================
+# Auth API Routes
+# =============================================================================
+
+auth_router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+# Simple in-memory user store (replace with database in production)
+_users_store: Dict[str, Dict[str, str]] = {}
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class RegisterRequest(BaseModel):
+    username: str
+    password: str
+    role: str = "user"
+
+
+@auth_router.post("/register")
+async def auth_register(request: RegisterRequest):
+    """Register a new user."""
+    if request.username in _users_store:
+        raise HTTPException(status_code=400, detail="Username already exists")
+
+    _users_store[request.username] = {
+        "password_hash": hash_password(request.password),
+        "role": request.role,
+    }
+
+    return {"success": True, "message": f"User '{request.username}' registered"}
+
+
+@auth_router.post("/login", response_model=TokenResponse)
+async def auth_login(request: LoginRequest):
+    """Login and receive a JWT token."""
+    user = _users_store.get(request.username)
+    if not user or not verify_password(request.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    token = create_access_token(subject=request.username, role=user["role"])
+    return TokenResponse(
+        access_token=token,
+        expires_in=int(os.getenv("MRKI_JWT_EXPIRATION", "3600")),
+    )
+
+
+@auth_router.get("/me")
+async def auth_me(request: Request):
+    """Get current user info."""
+    user = getattr(request.state, "user", None)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return {"user": user}
+
+
+# =============================================================================
 # Main Router Assembly
 # =============================================================================
 
 # Include all sub-routers
+router.include_router(auth_router)
 router.include_router(core_router)
 router.include_router(visual_router)
 router.include_router(dev_env_router)
@@ -663,27 +733,37 @@ def create_unified_app() -> FastAPI:
         description="Combined API for all Mrki modules",
         version="1.0.0",
     )
-    
-    # Add middleware
+
+    # Add middleware (order matters - last added runs first)
     app.add_middleware(GZipMiddleware, minimum_size=1000)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=os.getenv("MRKI_CORS_ORIGINS", "*").split(","),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
+
+    # Rate limiting
+    rate_limit_requests = int(os.getenv("RATE_LIMIT_REQUESTS", "100"))
+    rate_limit_window = int(os.getenv("RATE_LIMIT_WINDOW", "60"))
+    rate_limiter = RateLimitMiddleware(rate_limit_requests, rate_limit_window)
+    app.middleware("http")(rate_limiter)
+
+    # Authentication
+    auth_middleware = AuthMiddleware()
+    app.middleware("http")(auth_middleware)
+
     # Add exception handlers
     app.add_exception_handler(HTTPException, http_exception_handler)
     app.add_exception_handler(Exception, general_exception_handler)
-    
+
     # Include main router
     app.include_router(router)
-    
+
     # Store start time
     app.state.start_time = time.time()
-    
+
     @app.get("/")
     async def root():
         """Root endpoint."""
@@ -693,7 +773,7 @@ def create_unified_app() -> FastAPI:
             "documentation": "/docs",
             "health": "/api/v1/health",
         }
-    
+
     return app
 
 

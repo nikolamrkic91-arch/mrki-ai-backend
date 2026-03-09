@@ -1,32 +1,20 @@
 """Pytest configuration and fixtures."""
 
+import os
 import pytest
 from fastapi.testclient import TestClient
+
+# Disable auth and rate limiting for tests
+os.environ["MRKI_AUTH_ENABLED"] = "false"
+os.environ["RATE_LIMIT_ENABLED"] = "false"
 
 
 @pytest.fixture
 def client():
-    """Create a test client for API tests."""
-    from fastapi import FastAPI
-    
-    app = FastAPI()
-    
-    @app.get("/health")
-    def health():
-        return {"success": True, "data": {"status": "healthy"}}
-    
-    @app.get("/api/v1/version")
-    def version():
-        return {"success": True, "data": {"version": "1.0.0"}}
-    
-    @app.get("/api/v1/workflows")
-    def list_workflows():
-        return {"success": True, "data": [], "meta": {"total": 0}}
-    
-    @app.post("/api/v1/workflows")
-    def create_workflow(workflow: dict):
-        return {"success": True, "data": workflow}
-    
+    """Create a test client using the real API app."""
+    from api.main import create_unified_app
+
+    app = create_unified_app()
     return TestClient(app)
 
 
@@ -40,15 +28,15 @@ def sample_workflow_data():
             {
                 "name": "step1",
                 "action": "echo",
-                "params": {"message": "Hello"}
+                "params": {"message": "Hello"},
             },
             {
                 "name": "step2",
                 "action": "echo",
                 "params": {"message": "World"},
-                "depends_on": ["step1"]
-            }
-        ]
+                "depends_on": ["step1"],
+            },
+        ],
     }
 
 
@@ -59,5 +47,5 @@ def sample_task_data():
         "name": "test-task",
         "description": "Test task description",
         "action": "echo",
-        "params": {"message": "Hello"}
+        "params": {"message": "Hello"},
     }
