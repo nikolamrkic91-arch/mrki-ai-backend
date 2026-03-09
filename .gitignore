@@ -54,3 +54,6 @@ coverage.xml
 
 # Pytest
 .pytest_cache/
+
+# Auto-generated version file
+src/mrki/_version.py
