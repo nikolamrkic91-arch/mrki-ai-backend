@@ -389,20 +389,22 @@ def create_app(config: Optional[MrkiConfig] = None) -> Any:
     """Create and configure the FastAPI application."""
     from fastapi import FastAPI
     from fastapi.middleware.cors import CORSMiddleware
-    
+    from fastapi.staticfiles import StaticFiles
+    from fastapi.responses import FileResponse
+
     if config is None:
         config = load_config()
-    
+
     app = FastAPI(
         title="Mrki API",
         description="Unified API for the Mrki platform",
         version="1.0.0",
         lifespan=lifespan,
     )
-    
+
     # Store config in app state
     app.state.config = config
-    
+
     # Add CORS middleware
     app.add_middleware(
         CORSMiddleware,
@@ -411,7 +413,7 @@ def create_app(config: Optional[MrkiConfig] = None) -> Any:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
+
     # Import and include routers from sub-APIs
     try:
         from api.main import router as api_router
@@ -419,7 +421,7 @@ def create_app(config: Optional[MrkiConfig] = None) -> Any:
         logger.info("api_router_included")
     except ImportError as e:
         logger.warning("api_router_not_available", error=str(e))
-    
+
     # Health check endpoint
     @app.get("/health")
     async def health_check():
@@ -430,20 +432,39 @@ def create_app(config: Optional[MrkiConfig] = None) -> Any:
             "version": "1.0.0",
             "modules": list(module_registry.modules.keys()),
         }
-    
-    # Root endpoint
-    @app.get("/")
-    async def root():
-        """Root endpoint with API information."""
-        return {
-            "name": "Mrki API",
-            "version": "1.0.0",
-            "description": "Unified API for the Mrki platform",
-            "documentation": "/docs",
-            "health": "/health",
-            "modules": list(module_registry.modules.keys()),
-        }
-    
+
+    # Serve frontend static files if the build exists
+    frontend_dist = Path(__file__).parent / "frontend" / "dist"
+    if frontend_dist.exists():
+        # Serve static assets (JS, CSS, etc.)
+        app.mount("/assets", StaticFiles(directory=str(frontend_dist / "assets")), name="static")
+
+        # Serve index.html for all non-API routes (SPA catch-all)
+        @app.get("/{full_path:path}")
+        async def serve_frontend(full_path: str):
+            """Serve the frontend SPA for any non-API route."""
+            file_path = frontend_dist / full_path
+            if file_path.is_file():
+                return FileResponse(str(file_path))
+            return FileResponse(str(frontend_dist / "index.html"))
+
+        logger.info("frontend_serving_enabled", path=str(frontend_dist))
+    else:
+        # No frontend build - serve API info at root
+        @app.get("/")
+        async def root():
+            """Root endpoint with API information."""
+            return {
+                "name": "Mrki API",
+                "version": "1.0.0",
+                "description": "Unified API for the Mrki platform",
+                "documentation": "/docs",
+                "health": "/health",
+                "modules": list(module_registry.modules.keys()),
+            }
+
+        logger.info("frontend_not_found", path=str(frontend_dist))
+
     return app
 
 
