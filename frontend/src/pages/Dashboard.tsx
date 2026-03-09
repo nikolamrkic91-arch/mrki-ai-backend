@@ -4,9 +4,9 @@ import { api } from '../utils/api'
 interface HealthData {
   status: string
   modules: string[]
-  uptime: number
-  version: string
-  timestamp: number
+  uptime?: number
+  version?: string
+  timestamp?: number
 }
 
 interface ModuleHealth {
@@ -106,7 +106,7 @@ export default function Dashboard() {
         </div>
         <div className="card stat-card">
           <span className="stat-label">Uptime</span>
-          <span className="stat-value">{health ? formatUptime(health.uptime) : '-'}</span>
+          <span className="stat-value">{health?.uptime ? formatUptime(health.uptime) : '-'}</span>
           <span className="stat-detail">Since last restart</span>
         </div>
         <div className="card stat-card">
